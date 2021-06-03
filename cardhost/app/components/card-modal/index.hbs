@@ -1,13 +1,17 @@
-{{#if this.cards.isShowingModal}}
-<div style="border:3px red dashed">
+{{#if this.modal.isShowing}}
+<div style="border:3px red dashed" data-test-modal>
   <div>
-    <button {{on 'click' this.close}}>Close Modal</button>
+    <button data-test-modal-close {{on 'click' this.close}}>Close Modal</button>
   </div>
 
-  {{#if this.cards.isLoading}}
+  {{#if this.modal.isLoading}}
     <h1>LOADING!!!</h1>
   {{else}}
-    <this.cards.modalModel.component />
+    {{#if (eq this.modal.format 'edit')}}
+      <EditForm @card={{this.modal.loadedCard}}
+    {{else}}
+      <this.modal.loadedCard.component />
+    {{/if}}
   {{/if}}
 </div>
 {{/if}}

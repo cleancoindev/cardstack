@@ -1,10 +1,9 @@
 import Service from '@ember/service';
 import { macroCondition, isTesting } from '@embroider/macros';
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
 import { hbs } from 'ember-cli-htmlbars';
 import { setComponentTemplate } from '@ember/component';
-import { task, TaskGenerator } from 'ember-concurrency';
+import { task } from 'ember-concurrency';
 import { taskFor } from 'ember-concurrency-ts';
 
 import { Format, DeserializerName } from '@cardstack/core/src/interfaces';
@@ -21,21 +20,6 @@ export interface LoadedCard {
 }
 
 export default class Cards extends Service {
-  // TODO: Move to modal service
-  @tracked isShowingModal = false;
-  @tracked modalModel?: LoadedCard;
-
-  async loadInModal(url: string, format: Format): Promise<void> {
-    this.isShowingModal = true;
-
-    this.modalModel = await this.load(url, format);
-  }
-
-  closeModal(): void {
-    this.isShowingModal = false;
-    this.modalModel = undefined;
-  }
-
   async load(
     url: string,
     format: Format
@@ -52,46 +36,46 @@ export default class Cards extends Service {
   }
 
   @task
-  private internalLoad = taskFor(async function (
-    url: string
-  ): Promise<LoadedCard> {
-    let card = await fetchCard(url);
-    let model = await deserializeResponse(card);
+  private internalLoad = taskFor(
+    async (url: string): Promise<LoadedCard> => {
+      let card = await fetchCard(url);
+      let model = await deserializeResponse(card);
 
-    let { componentModule } = card.data.meta;
-    let cardComponent: unknown;
-    if (macroCondition(isTesting())) {
-      // in tests, our fake server inside mirage just defines these modules
-      // dynamically
-      cardComponent = window.require(componentModule)['default'];
-    } else {
-      if (!componentModule.startsWith('@cardstack/compiled/')) {
-        throw new Error(
-          `${url}'s meta.componentModule does not start with '@cardstack/compiled/`
-        );
+      let { componentModule } = card.data.meta;
+      let cardComponent: unknown;
+      if (macroCondition(isTesting())) {
+        // in tests, our fake server inside mirage just defines these modules
+        // dynamically
+        cardComponent = window.require(componentModule)['default'];
+      } else {
+        if (!componentModule.startsWith('@cardstack/compiled/')) {
+          throw new Error(
+            `${url}'s meta.componentModule does not start with '@cardstack/compiled/`
+          );
+        }
+        componentModule = componentModule.replace('@cardstack/compiled/', '');
+        cardComponent = (
+          await import(
+            /* webpackExclude: /schema\.js$/ */
+            `@cardstack/compiled/${componentModule}`
+          )
+        ).default;
       }
-      componentModule = componentModule.replace('@cardstack/compiled/', '');
-      cardComponent = (
-        await import(
-          /* webpackExclude: /schema\.js$/ */
-          `@cardstack/compiled/${componentModule}`
-        )
-      ).default;
+
+      let CallerComponent = setComponentTemplate(
+        hbs`<this.card @model = {{this.model}} />`,
+        class extends Component {
+          card = cardComponent;
+          model = model;
+        }
+      );
+
+      return {
+        model,
+        component: CallerComponent,
+      };
     }
-
-    let CallerComponent = setComponentTemplate(
-      hbs`<this.card @model = {{this.model}} />`,
-      class extends Component {
-        card = cardComponent;
-        model = model;
-      }
-    );
-
-    return {
-      model,
-      component: CallerComponent,
-    };
-  });
+  );
 }
 
 async function fetchCard(url: string): Promise<cardJSONReponse> {
@@ -153,11 +137,5 @@ class MissingDataError extends Error {
   constructor(path: string) {
     super(path);
     this.message = `Server response said ${path} would need to be deserialized, but that path didnt exist`;
-  }
-}
-
-declare module '@ember/service' {
-  interface Registry {
-    cards: Cards;
   }
 }
