@@ -1,17 +1,21 @@
 {{#if this.modal.isShowing}}
-<div style="border:3px red dashed" data-test-modal>
-  <div>
-    <button data-test-modal-close {{on 'click' this.close}}>Close Modal</button>
-  </div>
+  <div style="border:3px red dashed" data-test-modal>
+    <div>
+      <button data-test-modal-close {{on 'click' this.close}}>Close Modal</button>
+    </div>
 
-  {{#if this.modal.isLoading}}
-    <h1>LOADING!!!</h1>
-  {{else}}
-    {{#if (eq this.modal.format 'edit')}}
-      <EditForm @card={{this.modal.loadedCard}}
+    {{#if this.modal.isLoading}}
+      <h1>LOADING!!!</h1>
     {{else}}
-      <this.modal.loadedCard.component />
+      {{#if (eq this.modal.state.format 'edit')}}
+        <EditFormWrapper
+          @card={{this.modal.state.loadedCard}}
+          @save={{this.modal.save}}
+          @cancel={{this.modal.close}}
+      />
+      {{else}}
+        <this.modal.loadedCard.component />
+      {{/if}}
     {{/if}}
-  {{/if}}
-</div>
+  </div>
 {{/if}}

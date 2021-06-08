@@ -7,26 +7,43 @@ import { taskFor } from 'ember-concurrency-ts';
 
 import { LoadedCard } from './cards';
 import CardsService from '../services/cards';
+import { action } from '@ember/object';
 
 export default class Modal extends Service {
   @inject declare cards: CardsService;
 
   @tracked isShowing = false;
-  @tracked loadedCard?: LoadedCard;
-  @tracked format?: Format;
+
+  @tracked state?: {
+    format: Format;
+    url: string;
+    loadedCard: LoadedCard;
+  };
 
   @task openWithCard = taskFor(
     async (url: string, format: Format): Promise<void> => {
       this.isShowing = true;
 
-      this.format = format;
-      this.loadedCard = await this.cards.load(url, format);
+      let loadedCard = await this.cards.load(url, format);
+
+      this.state = {
+        loadedCard,
+        format,
+        url,
+      };
     }
   );
 
-  close(): void {
+  @action async save(): Promise<void> {
+    if (!this.state) {
+      return;
+    }
+    await this.cards.save(this.state.url, this.state.loadedCard.model);
+    this.close();
+  }
+
+  @action close(): void {
     this.isShowing = false;
-    this.loadedCard = undefined;
-    this.format = undefined;
+    this.state = undefined;
   }
 }

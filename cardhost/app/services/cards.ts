@@ -19,14 +19,21 @@ export interface LoadedCard {
   component: unknown;
 }
 
+function buildURL(url: string, format?: Format): string {
+  let fullURL = [cardServer, 'cards/', encodeCardURL(url)];
+  if (format) {
+    fullURL.push('?' + new URLSearchParams({ format }).toString());
+  }
+  return fullURL.join('');
+}
+
 export default class Cards extends Service {
   async load(
     url: string,
     format: Format
   ): Promise<{ model: any; component: unknown }> {
-    let params = new URLSearchParams({ format }).toString();
-    let fullURL = [cardServer, 'cards/', encodeCardURL(url), `?${params}`];
-    return this.internalLoad.perform(fullURL.join(''));
+    let fullURL = buildURL(url, format);
+    return this.internalLoad.perform(fullURL);
   }
 
   async loadForRoute(
@@ -62,11 +69,18 @@ export default class Cards extends Service {
         ).default;
       }
 
+      // TODO: @set should be conditional?
       let CallerComponent = setComponentTemplate(
-        hbs`<this.card @model = {{this.model}} />`,
-        class extends Component {
+        hbs`<this.card @model={{this.model}} @set={{this.setters}} />`,
+        class extends Component<{
+          set: (segments: string[], value: any) => void;
+        }> {
           card = cardComponent;
           model = model;
+
+          get setters() {
+            return makeSetter(this.args.set);
+          }
         }
       );
 
@@ -76,8 +90,43 @@ export default class Cards extends Service {
       };
     }
   );
+
+  async save(cardURL: string, data: unknown): Promise<void> {
+    await this.saveTask.perform(cardURL, data);
+  }
+
+  @task saveTask = taskFor(
+    async (cardURL: string, data: any): Promise<void> => {
+      await fetch(buildURL(cardURL), {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    }
+  );
 }
 
+function makeSetter(
+  callback: (segments: string[], value: any) => void,
+  segments: string[] = []
+): any {
+  let s = (value: any) => {
+    callback(segments, value);
+  };
+  (s as any).setters = new Proxy(
+    {},
+    {
+      get: (target: object, prop: string, receiver: unknown) => {
+        console.log('PROXY GET', target, prop, receiver);
+        if (typeof prop === 'string') {
+          return makeSetter(callback, [...segments, prop]);
+        } else {
+          return Reflect.get(target, prop, receiver);
+        }
+      },
+    }
+  );
+  return s;
+}
 async function fetchCard(url: string): Promise<cardJSONReponse> {
   let response = await fetch(url);
 
