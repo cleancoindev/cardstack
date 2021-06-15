@@ -32,7 +32,7 @@ module.exports = function (environment) {
     ENV['ember-cli-mirage'] = {
       enabled: false,
     };
-    ENV.cardServer = 'http://localhost:3000/';
+    ENV.cardServer = 'http://localhost:3000';
   }
 
   if (environment === 'test') {

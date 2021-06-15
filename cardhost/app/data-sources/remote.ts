@@ -2,7 +2,6 @@ import SourceClass from '@orbit/jsonapi';
 import { JSONAPIURLBuilder } from '@orbit/jsonapi';
 
 import config from 'cardhost/config/environment';
-import { encodeCardURL } from '@cardstack/core/src/utils';
 
 class CardURLBuilder extends JSONAPIURLBuilder {
   resourcePath(type: string, id?: string): string {
@@ -11,7 +10,7 @@ class CardURLBuilder extends JSONAPIURLBuilder {
     }
     let path = [this.serializer.resourceType(type)];
     if (id) {
-      path.push(encodeCardURL(id));
+      path.push(encodeURIComponent(id));
     }
     return path.join('/');
   }
@@ -22,7 +21,7 @@ export default {
   create(settings: any) {
     settings.name = 'remote';
     settings.host = config.cardServer;
-    // settings.URLBuilderClass = CardURLBuilder;
+    settings.URLBuilderClass = CardURLBuilder;
     return new SourceClass(settings);
   },
 };
