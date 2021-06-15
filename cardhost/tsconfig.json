@@ -43,5 +43,5 @@
     "tests/**/*",
     "types/**/*",
     "mirage/**/*"
-  ]
+, "config/environment.d.ts"  ]
 }

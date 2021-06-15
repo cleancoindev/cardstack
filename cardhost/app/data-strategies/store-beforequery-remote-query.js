@@ -3,41 +3,18 @@ import { RequestStrategy } from '@orbit/coordinator';
 export default {
   create() {
     return new RequestStrategy({
-      name: 'store-beforeupdate-remote-update',
+      name: 'store-beforequery-remote-query',
 
-      /**
-       * The name of the source to be observed.
-       */
       source: 'store',
+      on: 'beforeQuery',
 
-      /**
-       * The name of the event to observe (e.g. `beforeQuery`, `query`,
-       * `beforeUpdate`, `update`, etc.).
-       */
-      on: 'beforeUpdate',
-
-      /**
-       * The name of the source which will be acted upon.
-       */
       target: 'remote',
+      action: 'pull',
 
-      /**
-       * The action to perform on the target.
-       *
-       * Can be specified as a string (e.g. `pull`) or a function which will be
-       * invoked in the context of this strategy (and thus will have access to
-       * both `this.source` and `this.target`).
-       */
-      action: 'update',
-
-      /**
-       * A handler for any errors thrown as a result of performing the action.
-       */
-      catch(e, transform) {
-        console.error('Error performing remote.update()', transform, e);
+      catch(e) {
+        console.warn('error performing remote.pull', e); // eslint-disable-line
         this.source.requestQueue.skip(e);
         this.target.requestQueue.skip(e);
-        throw e;
       },
 
       /**

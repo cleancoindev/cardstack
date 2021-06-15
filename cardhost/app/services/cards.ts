@@ -11,8 +11,10 @@ import { cardJSONReponse } from '@cardstack/server/src/interfaces';
 import { encodeCardURL } from '@cardstack/core/src/utils';
 import serializers, { Serializer } from '@cardstack/core/src/serializers';
 import config from 'cardhost/config/environment';
+import { inject } from '@ember/service';
+import { Store } from 'ember-orbit';
 
-const { cardServer } = config as any; // Environment types arent working
+const { cardServer } = config; // Environment types arent working
 
 export interface LoadedCard {
   model: any;
@@ -28,12 +30,14 @@ function buildURL(url: string, format?: Format): string {
 }
 
 export default class Cards extends Service {
+  @inject declare store: Store;
+
   async load(
     url: string,
     format: Format
   ): Promise<{ model: any; component: unknown }> {
-    let fullURL = buildURL(url, format);
-    return this.internalLoad.perform(fullURL);
+    // let fullURL = buildURL(url, format);
+    return this.internalLoad.perform(url);
   }
 
   async loadForRoute(
@@ -44,11 +48,16 @@ export default class Cards extends Service {
 
   @task
   private internalLoad = taskFor(
-    async (url: string): Promise<LoadedCard> => {
-      let card = await fetchCard(url);
-      let model = await deserializeResponse(card);
+    async (cardID: string): Promise<LoadedCard> => {
+      // let card = await fetchCard(url);
+      // let card = await this.store.findRecord('cards', cardID);
+      let card = await this.store.liveQuery((qb) =>
+        qb.findRecord({ type: 'card', id: cardID })
+      );
+      debugger;
+      // let model = await deserializeResponse(card);
 
-      let { componentModule } = card.data.meta;
+      // let { componentModule } = card.data.meta;
       let cardComponent: unknown;
       if (macroCondition(isTesting())) {
         // in tests, our fake server inside mirage just defines these modules
@@ -127,15 +136,15 @@ function makeSetter(
   );
   return s;
 }
-async function fetchCard(url: string): Promise<cardJSONReponse> {
-  let response = await fetch(url);
+// async function fetchCard(url: string): Promise<cardJSONReponse> {
+//   let response = await fetch(url);
 
-  if (response.status !== 200) {
-    throw new Error(`unable to fetch card ${url}: status ${response.status}`);
-  }
+//   if (response.status !== 200) {
+//     throw new Error(`unable to fetch card ${url}: status ${response.status}`);
+//   }
 
-  return await response.json();
-}
+//   return await response.json();
+// }
 
 function deserializeResponse(response: cardJSONReponse): any {
   let { deserializationMap } = response.data.meta;
