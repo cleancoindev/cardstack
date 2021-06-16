@@ -51,8 +51,8 @@ export default class Cards extends Service {
     async (cardID: string): Promise<LoadedCard> => {
       // let card = await fetchCard(url);
       // let card = await this.store.findRecord('cards', cardID);
-      let card = await this.store.liveQuery((qb) =>
-        qb.findRecord({ type: 'card', id: cardID })
+      let card = await this.store.query((q) =>
+        q.findRecord({ type: 'card', id: cardID })
       );
       debugger;
       // let model = await deserializeResponse(card);

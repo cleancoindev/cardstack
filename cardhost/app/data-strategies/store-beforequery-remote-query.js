@@ -38,7 +38,7 @@ export default {
        * This setting is only effective for `blocking` strategies, since only in
        * those scenarios is processing delayed.
        */
-      passHints: true,
+      // passHints: true,
 
       /**
        * Should resolution of the target's `action` invocation block the
