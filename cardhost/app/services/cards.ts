@@ -51,13 +51,16 @@ export default class Cards extends Service {
     async (cardID: string): Promise<LoadedCard> => {
       // let card = await fetchCard(url);
       // let card = await this.store.findRecord('cards', cardID);
-      let card = await this.store.query((q) =>
-        q.findRecord({ type: 'card', id: cardID })
+      let { data, details } = await this.store.query(
+        (q) => q.findRecord({ type: 'card', id: cardID }),
+        { fullResponse: true }
       );
-      debugger;
-      // let model = await deserializeResponse(card);
 
-      // let { componentModule } = card.data.meta;
+      if (typeof details === 'undefined') {
+        throw new Error('NEED DETAILS');
+      }
+
+      let { componentModule } = details[0].document.data.meta;
       let cardComponent: unknown;
       if (macroCondition(isTesting())) {
         // in tests, our fake server inside mirage just defines these modules
@@ -66,7 +69,7 @@ export default class Cards extends Service {
       } else {
         if (!componentModule.startsWith('@cardstack/compiled/')) {
           throw new Error(
-            `${url}'s meta.componentModule does not start with '@cardstack/compiled/`
+            `${cardID}'s meta.componentModule does not start with '@cardstack/compiled/`
           );
         }
         componentModule = componentModule.replace('@cardstack/compiled/', '');
@@ -85,7 +88,7 @@ export default class Cards extends Service {
           set: (segments: string[], value: any) => void;
         }> {
           card = cardComponent;
-          model = model;
+          model = data;
 
           get setters() {
             return makeSetter(this.args.set);
@@ -94,7 +97,7 @@ export default class Cards extends Service {
       );
 
       return {
-        model,
+        model: data,
         component: CallerComponent,
       };
     }
