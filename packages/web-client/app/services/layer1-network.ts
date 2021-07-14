@@ -1,4 +1,4 @@
-import Service from '@ember/service';
+import { inject as service, default as Service } from '@ember/service';
 import config from '../config/environment';
 import {
   Layer1ChainEvent,
@@ -20,6 +20,7 @@ import {
 } from '@cardstack/web-client/utils/events';
 import { action } from '@ember/object';
 import { TaskGenerator } from 'ember-concurrency';
+import NetworkCorrection from './network-correction';
 export default class Layer1Network
   extends Service
   implements Emitter<Layer1ChainEvent> {
@@ -32,6 +33,7 @@ export default class Layer1Network
   @reads('strategy.defaultTokenBalance') defaultTokenBalance: BN | undefined;
   @reads('strategy.daiBalance') daiBalance: BN | undefined;
   @reads('strategy.cardBalance') cardBalance: BN | undefined;
+  @service declare networkCorrection: NetworkCorrection;
 
   constructor(props: object | undefined) {
     super(props);
@@ -48,6 +50,8 @@ export default class Layer1Network
     }
 
     this.strategy.on('disconnect', this.onDisconnect);
+    this.strategy.on('incorrect-chain', this.onIncorrectChain);
+    this.strategy.on('correct-chain', this.onCorrectChain);
   }
 
   connect(walletProvider: WalletProvider) {
@@ -61,6 +65,14 @@ export default class Layer1Network
 
   @action onDisconnect() {
     this.simpleEmitter.emit('disconnect');
+  }
+
+  @action onIncorrectChain() {
+    this.networkCorrection.onLayer1Incorrect();
+  }
+
+  @action onCorrectChain() {
+    this.networkCorrection.onLayer1Correct();
   }
 
   // basically only allow re-emitting of events from the strategy
