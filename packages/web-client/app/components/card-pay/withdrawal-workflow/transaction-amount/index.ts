@@ -12,11 +12,16 @@ import {
   getUnbridgedSymbol,
 } from '@cardstack/web-client/utils/token';
 import { WorkflowCardComponentArgs } from '@cardstack/web-client/models/workflow/workflow-card';
+import { currentNetworkDisplayInfo as c } from '@cardstack/web-client/utils/web3-strategies/network-display-info';
 
 class CardPayWithdrawalWorkflowTransactionAmountComponent extends Component<WorkflowCardComponentArgs> {
+  @service declare layer2Network: Layer2Network;
   @tracked amount = '';
   @tracked isAmountSet = false;
-  @service declare layer2Network: Layer2Network;
+  @tracked isConfirming = false;
+  @tracked isWithdrawing = false;
+  @tracked hasWithdrawn = false;
+  @tracked errorMessage = '';
 
   // assumption is this is always set by cards before it. It should be defined by the time
   // it gets to this part of the workflow
@@ -47,8 +52,10 @@ class CardPayWithdrawalWorkflowTransactionAmountComponent extends Component<Work
   }
 
   get setAmountCtaState() {
-    if (this.isAmountSet) {
+    if (this.args.isComplete) {
       return 'memorialized';
+    } else if (this.isAmountSet) {
+      return 'in-progress';
     } else {
       return 'default';
     }
@@ -74,6 +81,17 @@ class CardPayWithdrawalWorkflowTransactionAmountComponent extends Component<Work
     );
   }
 
+  get txViewerUrl() {
+    // TODO
+    return '';
+  }
+
+  get isConfirmingOrConfirmed() {
+    // user has entered the tx amount in the input field and started the withdrawal process
+    // once the withdrawal process is started, the input can no longer be changed
+    return this.isConfirming || this.isAmountSet;
+  }
+
   @action onInputAmount(str: string) {
     if (!isNaN(+str)) {
       this.amount = str.trim();
@@ -82,17 +100,47 @@ class CardPayWithdrawalWorkflowTransactionAmountComponent extends Component<Work
     }
   }
 
-  @action toggleAmountSet() {
-    if (this.isAmountSet) {
-      this.isAmountSet = false;
-      this.args.onIncomplete?.();
-    } else {
-      this.args.workflowSession.update(
-        'withdrawnAmount',
-        this.amountAsBigNumber.toString()
-      );
-      this.args.onComplete?.();
+  @action async confirm() {
+    this.errorMessage = '';
+    if (this.setAmountCtaDisabled) {
+      return;
+    }
+    try {
+      this.isConfirming = true;
+      // TODO: confirm action via card wallet
       this.isAmountSet = true;
+    } catch (e) {
+      console.error(e);
+      this.errorMessage =
+        'There was a problem receiving confirmation for the withdrawal of your tokens. This may be due to a network issue, or perhaps you canceled the request in your wallet.';
+    } finally {
+      this.isConfirming = false;
+      this.withdraw();
+    }
+  }
+
+  async withdraw() {
+    this.errorMessage = '';
+    if (!this.isAmountSet) {
+      return;
+    }
+    try {
+      this.isWithdrawing = true;
+      // TODO: withdraw action
+      this.args.workflowSession.updateMany({
+        withdrawnAmount: this.amountAsBigNumber.toString(),
+        layer1BlockHeightBeforeBridging: 1234,
+        relayTokensTxnReceipt: {
+          transactionHash: 'TODO',
+        },
+      });
+      this.args.onComplete?.();
+      this.hasWithdrawn = true;
+    } catch (e) {
+      console.error(e);
+      this.errorMessage = `There was a problem initiating the withdrawal of your tokens from ${c.layer2.fullName}. This may be due to a network issue, or perhaps you canceled the request in your wallet.`;
+    } finally {
+      this.isWithdrawing = false;
     }
   }
 }
