@@ -106,7 +106,6 @@ export default abstract class Layer2ChainWeb3Strategy
     this.provider.on('chainChanged', (chainId: number) => {
       if (chainId !== this.chainId) {
         this.simpleEmitter.emit('incorrect-chain');
-        this.disconnect();
       } else {
         this.simpleEmitter.emit('correct-chain');
       }
