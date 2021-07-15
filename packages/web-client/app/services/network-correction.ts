@@ -81,6 +81,7 @@ export default class NetworkCorrection extends Service {
       console.error('Layer 2 is not ready for reload');
     } else {
       console.log('reloading via service');
+      window.location.reload();
     }
   }
 }
