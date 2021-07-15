@@ -68,8 +68,10 @@ export default class NetworkCorrection extends Service {
     }
 
     // there might be a condition with disconnections later
-    let layer1ReadyForReload = !this.layer1Incorrect;
-    let layer2ReadyForReload = !this.layer2Incorrect;
+    let layer1ReadyForReload =
+      !this.layer1Incorrect || !this.layer1Network.isConnected;
+    let layer2ReadyForReload =
+      !this.layer2Incorrect || !this.layer2Network.isConnected;
 
     if (!layer1ReadyForReload && !layer2ReadyForReload) {
       console.error('Both networks are not ready for reload');
