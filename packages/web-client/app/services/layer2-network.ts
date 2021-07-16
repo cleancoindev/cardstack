@@ -61,6 +61,8 @@ export default class Layer2Network
     this.strategy.on('disconnect', this.onDisconnect);
     this.strategy.on('correct-chain', this.onCorrectChain);
     this.strategy.on('incorrect-chain', this.onIncorrectChain);
+
+    this.strategy.initialize?.();
   }
 
   async updateUsdConverters(

@@ -55,6 +55,7 @@ export interface Layer2Web3Strategy
   cardBalance: BN | undefined;
   depotSafe: DepotSafe | null;
   walletConnectUri: string | undefined;
+  initialize(): Promise<void>;
   updateUsdConverters(
     symbolsToUpdate: ConvertibleSymbol[]
   ): Promise<Record<ConvertibleSymbol, ConversionFunction>>;
