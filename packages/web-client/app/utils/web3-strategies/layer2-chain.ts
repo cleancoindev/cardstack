@@ -147,9 +147,6 @@ export default abstract class Layer2ChainWeb3Strategy
 
   async updateWalletInfo(accounts: string[]) {
     let newWalletInfo = new WalletInfo(accounts);
-    if (this.walletInfo.isEqualTo(newWalletInfo)) {
-      return;
-    }
     this.walletInfo = newWalletInfo;
     if (accounts.length) {
       taskFor(this.fetchDepotTask)
