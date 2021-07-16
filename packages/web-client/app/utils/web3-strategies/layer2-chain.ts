@@ -69,7 +69,7 @@ export default abstract class Layer2ChainWeb3Strategy
     this.chainName = networkDisplayInfo[networkSymbol].fullName;
     this.chainId = networkIds[networkSymbol];
     this.networkSymbol = networkSymbol;
-    this.walletInfo = new WalletInfo([], this.chainId);
+    this.walletInfo = new WalletInfo([]);
     let defaultTokenContractInfo = this.getTokenContractInfo(
       this.defaultTokenSymbol,
       networkSymbol
@@ -120,7 +120,7 @@ export default abstract class Layer2ChainWeb3Strategy
           `Expected connection on ${this.chainName} (chain ID ${this.chainId}) but connected to chain ID ${chainId}`
         );
       }
-      this.updateWalletInfo(accounts, chainId);
+      this.updateWalletInfo(accounts);
     });
 
     this.connector.on('disconnect', (error) => {
@@ -135,7 +135,7 @@ export default abstract class Layer2ChainWeb3Strategy
     this.#exchangeRateApi = await getSDK('ExchangeRate', this.web3);
     this.#safesApi = await getSDK('Safes', this.web3);
     this.#hubAuthApi = await getSDK('HubAuth', this.web3, config.hubURL);
-    this.updateWalletInfo(this.connector.accounts, this.connector.chainId);
+    this.updateWalletInfo(this.connector.accounts);
   }
 
   private getTokenContractInfo(
@@ -145,8 +145,8 @@ export default abstract class Layer2ChainWeb3Strategy
     return new TokenContractInfo(symbol, network);
   }
 
-  async updateWalletInfo(accounts: string[], chainId: number) {
-    let newWalletInfo = new WalletInfo(accounts, chainId);
+  async updateWalletInfo(accounts: string[]) {
+    let newWalletInfo = new WalletInfo(accounts);
     if (this.walletInfo.isEqualTo(newWalletInfo)) {
       return;
     }
@@ -163,7 +163,7 @@ export default abstract class Layer2ChainWeb3Strategy
   }
 
   clearWalletInfo() {
-    this.updateWalletInfo([], this.chainId);
+    this.updateWalletInfo([]);
   }
 
   async refreshBalances() {

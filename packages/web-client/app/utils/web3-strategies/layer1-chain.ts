@@ -47,7 +47,7 @@ export default abstract class Layer1ChainWeb3Strategy
 
   constructor(networkSymbol: Layer1NetworkSymbol) {
     this.chainId = networkIds[networkSymbol];
-    this.walletInfo = new WalletInfo([], this.chainId);
+    this.walletInfo = new WalletInfo([]);
     this.networkSymbol = networkSymbol;
     this.initialize();
   }
@@ -135,7 +135,7 @@ export default abstract class Layer1ChainWeb3Strategy
   }
 
   async onConnect(accounts: string[]) {
-    this.updateWalletInfo(accounts, this.chainId);
+    this.updateWalletInfo(accounts);
     this.currentProviderId = this.connectionManager?.providerId;
     this.#waitForAccountDeferred.resolve();
   }
@@ -188,8 +188,8 @@ export default abstract class Layer1ChainWeb3Strategy
     return this.simpleEmitter.on(event, cb);
   }
 
-  private updateWalletInfo(accounts: string[], chainId: number) {
-    this.walletInfo = new WalletInfo(accounts, chainId);
+  private updateWalletInfo(accounts: string[]) {
+    this.walletInfo = new WalletInfo(accounts);
     if (accounts.length > 0) {
       this.refreshBalances();
     } else {
@@ -200,7 +200,7 @@ export default abstract class Layer1ChainWeb3Strategy
   }
 
   private clearWalletInfo() {
-    this.updateWalletInfo([], -1);
+    this.updateWalletInfo([]);
   }
 
   contractForToken(symbol: BridgeableSymbol) {
