@@ -33,12 +33,8 @@ export default class NetworkCorrection extends Service {
   @action
   onLayer1Incorrect() {
     console.log('incorrect chain detected');
-    let layer1PreviouslyIncorrect = this.layer1Incorrect;
     this.needsReload = true;
     this.layer1Incorrect = true;
-    if (!layer1PreviouslyIncorrect) {
-      this.informUser();
-    }
   }
 
   @action
@@ -50,12 +46,8 @@ export default class NetworkCorrection extends Service {
 
   @action
   onLayer2Incorrect() {
-    let layer2PreviouslyIncorrect = this.layer2Incorrect;
     this.needsReload = true;
     this.layer2Incorrect = true;
-    if (!layer2PreviouslyIncorrect) {
-      this.informUser();
-    }
   }
 
   @action
@@ -63,12 +55,6 @@ export default class NetworkCorrection extends Service {
     // change this to also include layer 2
     this.layer2Incorrect = false;
     this.maybeReload();
-  }
-
-  informUser() {
-    console.log(
-      'show a modal that tells the user that they are on the wrong chain(s) and that they need to change chains, and reload the page'
-    );
   }
 
   maybeReload() {
