@@ -95,6 +95,7 @@ export default abstract class Layer2ChainWeb3Strategy
         this.chainId
       ),
     });
+    this.web3.setProvider(this.provider as any);
     this.connector.on('display_uri', (err, payload) => {
       if (err) {
         console.error('Error in display_uri callback', err);
@@ -112,18 +113,32 @@ export default abstract class Layer2ChainWeb3Strategy
         this.simpleEmitter.emit('correct-chain');
       }
     });
-    this.connector.on('session_update', async (error, payload) => {
-      if (error) {
-        throw error;
+
+    let strategy = this;
+    this.provider.on(
+      'accountsChanged',
+      async function (this: WalletConnectProvider, accounts: string[]) {
+        strategy.connectedChainId = this.wc.chainId;
+
+        if (this.wc.chainId === strategy.chainId) {
+          strategy.#exchangeRateApi = await getSDK(
+            'ExchangeRate',
+            strategy.web3
+          );
+          strategy.#safesApi = await getSDK('Safes', strategy.web3);
+          strategy.#hubAuthApi = await getSDK(
+            'HubAuth',
+            strategy.web3,
+            config.hubURL
+          );
+          strategy.simpleEmitter.emit('correct-chain');
+        } else {
+          strategy.simpleEmitter.emit('incorrect-chain');
+        }
+
+        strategy.updateWalletInfo(accounts);
       }
-      let { accounts, chainId } = payload.params[0];
-      if (chainId !== this.chainId) {
-        throw new Error(
-          `Expected connection on ${this.chainName} (chain ID ${this.chainId}) but connected to chain ID ${chainId}`
-        );
-      }
-      this.updateWalletInfo(accounts);
-    });
+    );
 
     this.connector.on('disconnect', (error) => {
       if (error) {
@@ -133,11 +148,6 @@ export default abstract class Layer2ChainWeb3Strategy
       this.onDisconnect();
     });
     await this.provider.enable();
-    this.web3.setProvider(this.provider as any);
-    this.#exchangeRateApi = await getSDK('ExchangeRate', this.web3);
-    this.#safesApi = await getSDK('Safes', this.web3);
-    this.#hubAuthApi = await getSDK('HubAuth', this.web3, config.hubURL);
-    this.updateWalletInfo(this.connector.accounts);
   }
 
   private getTokenContractInfo(
