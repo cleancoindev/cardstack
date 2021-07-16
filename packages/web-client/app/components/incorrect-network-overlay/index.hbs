@@ -1,0 +1,6 @@
+{{!-- template-lint-disable no-inline-styles --}}
+{{#if this.shouldShowOverlay}}
+  <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 30;">
+    You're on the wrong network. {{this.message}}
+  </div>
+{{/if}}
