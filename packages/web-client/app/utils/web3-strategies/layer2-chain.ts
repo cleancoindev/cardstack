@@ -52,6 +52,7 @@ export default abstract class Layer2ChainWeb3Strategy
   #exchangeRateApi!: IExchangeRate;
   #safesApi!: ISafes;
   #hubAuthApi!: IHubAuth;
+  @tracked connectedChainId: number | undefined;
   @tracked depotSafe: DepotSafe | null = null;
   @tracked walletInfo: WalletInfo;
   @tracked walletConnectUri: string | undefined;
@@ -103,6 +104,8 @@ export default abstract class Layer2ChainWeb3Strategy
     });
 
     this.provider.on('chainChanged', (chainId: number) => {
+      this.connectedChainId = chainId;
+
       if (chainId !== this.chainId) {
         this.simpleEmitter.emit('incorrect-chain');
       } else {
@@ -145,9 +148,9 @@ export default abstract class Layer2ChainWeb3Strategy
   }
 
   async updateWalletInfo(accounts: string[]) {
-    let newWalletInfo = new WalletInfo(accounts);
-    this.walletInfo = newWalletInfo;
-    if (accounts.length) {
+    this.walletInfo = new WalletInfo(accounts);
+    // we will have problems trying to refetch balances if we are not connected to the right chain
+    if (accounts.length && this.connectedChainId === this.chainId) {
       taskFor(this.fetchDepotTask)
         .perform()
         .then(() => {
