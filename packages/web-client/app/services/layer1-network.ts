@@ -65,6 +65,7 @@ export default class Layer1Network
 
   @action onDisconnect() {
     this.simpleEmitter.emit('disconnect');
+    this.networkCorrection.onLayer1Disconnect();
   }
 
   @action onIncorrectChain() {

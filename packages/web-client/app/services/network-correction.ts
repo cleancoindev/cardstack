@@ -21,6 +21,16 @@ export default class NetworkCorrection extends Service {
   @tracked layer2Incorrect = false;
 
   @action
+  onLayer1Disconnect() {
+    this.maybeReload();
+  }
+
+  @action
+  onLayer2Disconnect() {
+    this.maybeReload();
+  }
+
+  @action
   onLayer1Incorrect() {
     console.log('incorrect chain detected');
     let layer1PreviouslyIncorrect = this.layer1Incorrect;

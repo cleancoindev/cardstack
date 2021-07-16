@@ -100,6 +100,7 @@ export default class Layer2Network
   @action onDisconnect() {
     this.hubAuthentication.authToken = null;
     this.simpleEmitter.emit('disconnect');
+    this.networkCorrection.onLayer2Disconnect();
   }
 
   @action onCorrectChain() {
