@@ -82,12 +82,13 @@ export default abstract class Layer2ChainWeb3Strategy
   async initialize() {
     this.provider = new WalletConnectProvider({
       chainId: this.chainId,
-      rpc: {
-        [networkIds[this.networkSymbol]]: getConstantByNetwork(
-          'rpcNode',
-          this.networkSymbol
-        ),
-      },
+      // provide an rpc node for all known networks to handle 'wrong' connections without crashing
+      rpc: Object.fromEntries(
+        Object.entries(networkIds).map(([symbol, chainId]) => [
+          chainId,
+          getConstantByNetwork('rpcNode', symbol),
+        ])
+      ),
       connector: new CustomStorageWalletConnect(
         {
           bridge: BRIDGE,
