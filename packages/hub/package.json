@@ -44,7 +44,7 @@
     "node-pg-migrate": "^5.9.0",
     "pg": "^8.6.0",
     "pg-format": "^1.0.4",
-    "qs": "^6.10.1",
+    "qs": "^6.10.3",
     "query-string": "^7.0.0",
     "semver": "^7.3.5",
     "short-uuid": "^4.2.0",
